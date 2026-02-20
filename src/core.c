@@ -64,7 +64,11 @@ static struct {
         Rvk_Buffer bounding_box_idx;
         Rvk_Buffer frustum_vtx;
         Rvk_Buffer frustum_idx;
-    } line;                              
+    } line;
+    struct {
+        VkPipeline pipeline;
+        VkPipelineLayout pipeline_layout;
+    } dyn_line;
 } standard = {0};
 
 Rvk_Primitive_2D_Vertex primitive_2D_vertices[] = {
@@ -209,6 +213,10 @@ void close_window()
         r_destroy_rvk_buffer(ctx.device.logical, standard.line.bounding_box_idx);
         vkDestroyPipeline(ctx.device.logical, standard.line.pipeline, NULL);
         vkDestroyPipelineLayout(ctx.device.logical, standard.line.pipeline_layout, NULL);
+    }
+    if (standard.dyn_line.pipeline) {
+        vkDestroyPipeline(ctx.device.logical, standard.dyn_line.pipeline, NULL);
+        vkDestroyPipelineLayout(ctx.device.logical, standard.dyn_line.pipeline_layout, NULL);
     }
 
     r_destroy_rvk_swapchain(ctx.device.logical, ctx.swapchain);
@@ -355,12 +363,92 @@ defer:
     return result;
 }
 
-bool draw_bounding_box_from_matrix_stack(Color color)
+struct {
+    float16 mvp;
+    Vector4 color;
+    Vector4 start;
+    Vector4 end;
+} dyn_line_push_const;
+
+bool create_dynamic_line_pipeline_()
+{
+    bool result = true;
+    VkPipelineShaderStageCreateInfo stages[2];
+    String_Builder sb = {0};
+    Core_Context ctx = get_core_context();
+
+    VkPushConstantRange pc_range = {
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .size = sizeof(dyn_line_push_const),
+    };
+    if (!vk_create_pipeline_layout(ctx.device.logical,
+                                   NULL,
+                                   &standard.dyn_line.pipeline_layout,
+                                   .pushConstantRangeCount = 1,
+                                   .pPushConstantRanges = &pc_range)) return_defer(false);
+
+    /* load shaders */
+    if (!read_entire_file("shaders/dynamic_line.vert.glsl.spv", &sb)) return_defer(false);
+    stages[0] = r_create_vertex_stage_ci(ctx.device.logical, sb.count, (uint32_t*)sb.items);
+    if (!stages[0].module) return_defer(false);
+    sb.count = 0; // reuse memory
+    if (!read_entire_file("shaders/dynamic_line.frag.glsl.spv", &sb)) return_defer(false);
+    stages[1] = r_create_fragment_stage_ci(ctx.device.logical, sb.count, (uint32_t*)sb.items);
+    if (!stages[0].module) return_defer(false);
+    sb.count = 0;
+
+    /* temporary allocator for creating graphics pipeline */
+    VkPipelineVertexInputStateCreateInfo empty_input_state = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO
+    };
+    size_t temp_alloc_save_point = r_temp_save();
+    if (!vk_create_graphics_pipeline(ctx.device.logical, NULL, NULL, &standard.dyn_line.pipeline,
+                                     .stageCount = ARRAY_LEN(stages),
+                                     .pStages = stages,
+                                     .pVertexInputState = &empty_input_state,
+                                     .pInputAssemblyState = r_temp_default_line_input_assembly_state_ci(),
+                                     .pViewportState = r_temp_default_viewport_state_ci(ctx.swapchain.extent),
+                                     .pRasterizationState = r_temp_default_line_rasterization_state_ci(),
+                                     .pMultisampleState = r_temp_default_multisample_state_ci(),
+                                     .pDepthStencilState = r_temp_default_depth_stencil_state_ci(),
+                                     .pColorBlendState = r_temp_default_color_blend_state_ci(),
+                                     .pDynamicState = r_temp_default_dynamic_state_ci(),
+                                     .layout = standard.dyn_line.pipeline_layout,
+                                     .renderPass = ctx.swapchain.render_pass)) return_defer(false);
+    r_temp_rewind(temp_alloc_save_point);
+    vkDestroyShaderModule(ctx.device.logical, stages[0].module, NULL);
+    vkDestroyShaderModule(ctx.device.logical, stages[1].module, NULL);
+
+defer:
+    sb_free(sb);
+    return result;
+}
+
+bool draw_line(Vector3 start, Vector3 end, Color color)
+{
+    if (!standard.dyn_line.pipeline) if (!create_dynamic_line_pipeline_()) return false;
+
+    dyn_line_push_const.mvp   = MatrixToFloatV(get_model_view_projection());
+    dyn_line_push_const.color = (Vector4){color.r/255.0f, color.g/255.0f, color.b/255.0f, color.a/255.0f};
+    dyn_line_push_const.start = (Vector4){start.x, start.y, start.z, 1.0f};
+    dyn_line_push_const.end   = (Vector4){end.x, end.y, end.z, 1.0f};
+
+    VkCommandBuffer cb = ctx.device.cmd_buffs[ctx.current_frame];
+    vkCmdBindPipeline(cb, 0, standard.dyn_line.pipeline);
+    vkCmdPushConstants(cb, standard.dyn_line.pipeline_layout,
+                       VK_SHADER_STAGE_VERTEX_BIT, 0,
+                       sizeof(dyn_line_push_const), &dyn_line_push_const);
+    r_cmd_set_viewport_scissor(cb, ctx.swapchain.extent);
+    vkCmdDraw(cb, 2, 1, 0, 0);
+
+    return true;
+}
+
+bool draw_wireframe_box_from_mat_stack(Color color)
 {
     if (!standard.line.pipeline) if (!create_line_pipeline_()) return false;
 
     if (!standard.line.bounding_box_vtx.info.buffer) {
-
         size_t bb_vtx_count = ARRAY_LEN(bounding_box_vertices);
         size_t bb_idx_count = ARRAY_LEN(bounding_box_indices);
         standard.line.bounding_box_vtx = r_create_vertex_buffer(ctx.device,
@@ -539,7 +627,7 @@ Core_Context get_core_context()
     return ctx;
 }
 
-void begin_mode_3d(Camera camera)
+void begin_mode_3D(Camera camera)
 {
     double aspect = ctx.swapchain.extent.width / (double)ctx.swapchain.extent.height;
     matrices.proj  = MatrixPerspective(camera.fovy * DEG2RAD, aspect, Z_NEAR, Z_FAR);
@@ -550,7 +638,7 @@ void begin_mode_3d(Camera camera)
     push_matrix();
 }
 
-void end_mode_3d()
+void end_mode_3D()
 {
     pop_matrix();
 

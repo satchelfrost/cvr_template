@@ -22,6 +22,8 @@ const char *shaders[] = {
     "point_cloud.frag.glsl",
     "line.vert.glsl",
     "line.frag.glsl",
+    "dynamic_line.vert.glsl",
+    "dynamic_line.frag.glsl",
 };
 
 bool compile_shaders(Cmd *cmd)
@@ -97,6 +99,7 @@ int main(int argc, char **argv)
     if (!build_glfw_linux(&cmd)) return 1;
     if (!build_cvr_linux(&cmd, false)) return 1;
     if (!build_example_linux(&cmd, false, "dvd_logo")) return 1;
+    if (!build_example_linux(&cmd, false, "ray_tile_intersection")) return 1;
     if (!compile_shaders(&cmd)) return 1;
 
     return 0;

@@ -36,6 +36,10 @@ typedef struct {
     Vector3 min, max;
 } AABB;
 
+typedef struct {
+    Vector2 min, max;
+} AABB_2D;
+
 typedef struct Color {
     unsigned char r;
     unsigned char g;
@@ -216,13 +220,14 @@ typedef struct {
     float fovy;
 } Camera;
 
-void begin_mode_3d(Camera camera);
-void end_mode_3d();
+void begin_mode_3D(Camera camera);
+void end_mode_3D();
 void update_camera_free(Camera *camera);
 
 bool draw_rectangle(int x, int y, int width, int height, Color color);
-bool draw_bounding_box_from_matrix_stack(Color color);
+bool draw_wireframe_box_from_mat_stack(Color color);
 bool draw_frustum(Color color, Camera camera);
+bool draw_line(Vector3 start, Vector3 end, Color color);
 
 typedef struct {
     Rvk_Device device;
