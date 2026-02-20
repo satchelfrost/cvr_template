@@ -1,0 +1,6 @@
+build/
+nob
+nob.old
+tags
+*.spv
+*.bak
