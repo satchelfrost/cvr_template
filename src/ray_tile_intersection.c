@@ -14,7 +14,6 @@ typedef struct {
 bool ray_plane_intersection_point(Ray r, Plane p, Vector3 *point)
 {
     r.direction = Vector3Normalize(r.direction);
-    r.direction = Vector3Scale(r.direction, r.max_distance);
     float t = Vector3DotProduct(p.normal, Vector3Subtract(p.point, r.origin))/Vector3DotProduct(p.normal, r.direction);
     if (t >= 0.0f && t <= r.max_distance) {
         *point = Vector3Add(r.origin, Vector3Scale(r.direction, t));
@@ -41,18 +40,18 @@ int main()
     init_window(1600, 900, "ray tile intersection");
 
     Camera main_camera = {
-        .position = {2.0f, 1.0f, 1.0f},
-        .target = {0.0f, 0.0f, 0.0f},
-        .up = {0.0f, 1.0f, 0.0f},
-        .fovy = 45.0f,
+        .position = {1.182641, 1.0, 2.065485},
+        .target   = {0.236522, -0.013404, 0.0461},
+        .up       = {0.0, 1.0, 0.0},
+        .fovy     = 45.0f,
     };
     Camera head = {
         .position = {0.0f, 0.0f, 0.0f},
-        .target = {0.0f, 0.0f, -1.0f},
-        .up = {0.0f, 1.0f, 0.0f},
-        .fovy = 45.0f,
+        .target   = {0.0f, 0.0f, -1.0f},
+        .up       = {0.0f, 1.0f, 0.0f},
+        .fovy     = 45.0f,
     };
-    Camera *controlling_camera = &main_camera;
+    Camera *controlling_camera = &head;
 
     Plane front_wall = {
         .normal = {0.0, 0.0, 1.0f},
@@ -123,23 +122,26 @@ int main()
         Ray head_dir = {
             .origin = head.position,
             .direction = Vector3Subtract(head.target, head.position),
-            .max_distance = 10.0f,
+            .max_distance = 2.0f,
         };
 
         if (is_key_pressed(KEY_C))
             controlling_camera = (controlling_camera == &main_camera) ? &head : &main_camera;
 
+        if (is_key_pressed(KEY_P)) {
+            printf("position = {%f, %f, %f}\n", main_camera.position.x, main_camera.position.y, main_camera.position.z);
+            printf("target = {%f, %f, %f}\n",   main_camera.target.x,   main_camera.target.y,   main_camera.target.z);
+            printf("up = {%f, %f, %f}\n",       main_camera.up.x,       main_camera.up.y,       main_camera.up.z);
+        }
+
         update_camera_free(controlling_camera);
 
-        begin_drawing(BLUE);
+        begin_drawing(BLACK);
         begin_mode_3D(main_camera);
-            // TODO: uncomment this line for a weird bug
-            draw_wireframe_box_from_mat_stack(BLACK);
-
             push_matrix();
                 Matrix m = MatrixInvert(MatrixLookAt(head.position, head.target, head.up));
                 matrix_cat(m);
-                draw_line((Vector3){0.0f, 0.0f, 0.0f}, (Vector3){0.0f, 0.0f, -10.0f}, GREEN);
+                draw_line((Vector3){0.0f, 0.0f, 0.0f}, (Vector3){0.0f, 0.0f, -head_dir.max_distance}, GREEN);
             pop_matrix();
 
 

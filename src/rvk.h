@@ -174,6 +174,7 @@ VkDebugUtilsMessengerCreateInfoEXT r_get_debug_messenger_info(void);
 char *r_temp_strdup(const char *cstr);
 char *r_temp_strndup(const char *s, size_t n);
 void *r_temp_alloc(size_t requested_size);
+void *r_temp_calloc(size_t requested_size);
 char *r_temp_sprintf(const char *format, ...) RVK_PRINTF_FORMAT(1, 2);
 void r_temp_reset(void);
 size_t r_temp_save(void);
@@ -1027,7 +1028,7 @@ bool r_init_framebuffers(VkDevice device, Rvk_Swapchain *swapchain, VkRenderPass
 
 VkPipelineDepthStencilStateCreateInfo *r_temp_default_depth_stencil_state_ci(void)
 {
-    VkPipelineDepthStencilStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineDepthStencilStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineDepthStencilStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .depthTestEnable = VK_TRUE,
@@ -1040,7 +1041,7 @@ VkPipelineDepthStencilStateCreateInfo *r_temp_default_depth_stencil_state_ci(voi
 
 VkPipelineRasterizationStateCreateInfo *r_temp_default_rasterization_state_ci(void)
 {
-    VkPipelineRasterizationStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineRasterizationStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineRasterizationStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .polygonMode = VK_POLYGON_MODE_FILL,
@@ -1052,7 +1053,7 @@ VkPipelineRasterizationStateCreateInfo *r_temp_default_rasterization_state_ci(vo
 
 VkPipelineRasterizationStateCreateInfo *r_temp_default_point_rasterization_state_ci(void)
 {
-    VkPipelineRasterizationStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineRasterizationStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineRasterizationStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .polygonMode = VK_POLYGON_MODE_POINT,
@@ -1063,7 +1064,7 @@ VkPipelineRasterizationStateCreateInfo *r_temp_default_point_rasterization_state
 
 VkPipelineRasterizationStateCreateInfo *r_temp_default_line_rasterization_state_ci(void)
 {
-    VkPipelineRasterizationStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineRasterizationStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineRasterizationStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
         .polygonMode = VK_POLYGON_MODE_LINE,
@@ -1074,7 +1075,7 @@ VkPipelineRasterizationStateCreateInfo *r_temp_default_line_rasterization_state_
 
 VkPipelineMultisampleStateCreateInfo *r_temp_default_multisample_state_ci(void)
 {
-    VkPipelineMultisampleStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineMultisampleStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineMultisampleStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
@@ -1085,15 +1086,15 @@ VkPipelineMultisampleStateCreateInfo *r_temp_default_multisample_state_ci(void)
 
 VkPipelineViewportStateCreateInfo *r_temp_default_viewport_state_ci(VkExtent2D extent)
 {
-    VkViewport *default_viewport_state = r_temp_alloc(sizeof(*default_viewport_state));
-    VkRect2D *default_scissor_state    = r_temp_alloc(sizeof(*default_scissor_state));
+    VkViewport *default_viewport_state = r_temp_calloc(sizeof(*default_viewport_state));
+    VkRect2D *default_scissor_state    = r_temp_calloc(sizeof(*default_scissor_state));
 
     default_viewport_state->width    = extent.width;
     default_viewport_state->height   = extent.height;
     default_viewport_state->maxDepth = 1.0f;
     default_scissor_state->extent    = extent;
 
-    VkPipelineViewportStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineViewportStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineViewportStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .viewportCount = 1,
@@ -1106,7 +1107,7 @@ VkPipelineViewportStateCreateInfo *r_temp_default_viewport_state_ci(VkExtent2D e
 
 VkPipelineInputAssemblyStateCreateInfo *r_temp_default_input_assembly_state_ci(void)
 {
-    VkPipelineInputAssemblyStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineInputAssemblyStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineInputAssemblyStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
@@ -1116,7 +1117,7 @@ VkPipelineInputAssemblyStateCreateInfo *r_temp_default_input_assembly_state_ci(v
 
 VkPipelineInputAssemblyStateCreateInfo *r_temp_default_point_input_assembly_state_ci(void)
 {
-    VkPipelineInputAssemblyStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineInputAssemblyStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineInputAssemblyStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST
@@ -1126,7 +1127,7 @@ VkPipelineInputAssemblyStateCreateInfo *r_temp_default_point_input_assembly_stat
 
 VkPipelineInputAssemblyStateCreateInfo *r_temp_default_line_input_assembly_state_ci(void)
 {
-    VkPipelineInputAssemblyStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineInputAssemblyStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineInputAssemblyStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
         .topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST
@@ -1136,13 +1137,13 @@ VkPipelineInputAssemblyStateCreateInfo *r_temp_default_line_input_assembly_state
 
 VkPipelineVertexInputStateCreateInfo *r_temp_default_primitive_2D_vertex_input_state_ci(void)
 {
-    VkVertexInputBindingDescription *input_binding_desc = r_temp_alloc(sizeof(*input_binding_desc));
+    VkVertexInputBindingDescription *input_binding_desc = r_temp_calloc(sizeof(*input_binding_desc));
     *input_binding_desc = (VkVertexInputBindingDescription) {
         .binding   = 0,
         .stride    = sizeof(Rvk_Primitive_2D_Vertex),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
     };
-    VkVertexInputAttributeDescription *vert_attrs = r_temp_alloc(2*sizeof(*vert_attrs));
+    VkVertexInputAttributeDescription *vert_attrs = r_temp_calloc(2*sizeof(*vert_attrs));
     vert_attrs[0].location = 0;
     vert_attrs[0].format = VK_FORMAT_R32G32_SFLOAT;
     vert_attrs[0].offset = offsetof(Rvk_Primitive_2D_Vertex, position);
@@ -1150,7 +1151,7 @@ VkPipelineVertexInputStateCreateInfo *r_temp_default_primitive_2D_vertex_input_s
     vert_attrs[1].format = VK_FORMAT_R32G32B32_SFLOAT;
     vert_attrs[1].offset = offsetof(Rvk_Primitive_2D_Vertex, color);
 
-    VkPipelineVertexInputStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineVertexInputStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineVertexInputStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
@@ -1163,13 +1164,13 @@ VkPipelineVertexInputStateCreateInfo *r_temp_default_primitive_2D_vertex_input_s
 
 VkPipelineVertexInputStateCreateInfo *r_temp_default_primitive_point_input_state_ci(void)
 {
-    VkVertexInputBindingDescription *input_binding_desc = r_temp_alloc(sizeof(*input_binding_desc));
+    VkVertexInputBindingDescription *input_binding_desc = r_temp_calloc(sizeof(*input_binding_desc));
     *input_binding_desc = (VkVertexInputBindingDescription) {
         .binding   = 0,
         .stride    = sizeof(Rvk_Primitive_Point),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
     };
-    VkVertexInputAttributeDescription *vert_attrs = r_temp_alloc(2*sizeof(*vert_attrs));
+    VkVertexInputAttributeDescription *vert_attrs = r_temp_calloc(2*sizeof(*vert_attrs));
     vert_attrs[0].location = 0;
     vert_attrs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
     vert_attrs[0].offset = offsetof(Rvk_Primitive_Point, position);
@@ -1177,7 +1178,7 @@ VkPipelineVertexInputStateCreateInfo *r_temp_default_primitive_point_input_state
     vert_attrs[1].format = VK_FORMAT_R8G8B8A8_UINT;
     vert_attrs[1].offset = offsetof(Rvk_Primitive_Point, color);
 
-    VkPipelineVertexInputStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineVertexInputStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineVertexInputStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
@@ -1190,13 +1191,13 @@ VkPipelineVertexInputStateCreateInfo *r_temp_default_primitive_point_input_state
 
 VkPipelineVertexInputStateCreateInfo *r_temp_default_primitive_line_input_state_ci(void)
 {
-    VkVertexInputBindingDescription *input_binding_desc = r_temp_alloc(sizeof(*input_binding_desc));
+    VkVertexInputBindingDescription *input_binding_desc = r_temp_calloc(sizeof(*input_binding_desc));
     *input_binding_desc = (VkVertexInputBindingDescription) {
         .binding   = 0,
         .stride    = sizeof(Rvk_Primitive_Point),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
     };
-    VkVertexInputAttributeDescription *vert_attrs = r_temp_alloc(2*sizeof(*vert_attrs));
+    VkVertexInputAttributeDescription *vert_attrs = r_temp_calloc(2*sizeof(*vert_attrs));
     vert_attrs[0].location = 0;
     vert_attrs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
     vert_attrs[0].offset = offsetof(Rvk_Line_Vertex, position);
@@ -1204,7 +1205,7 @@ VkPipelineVertexInputStateCreateInfo *r_temp_default_primitive_line_input_state_
     vert_attrs[1].format = VK_FORMAT_R8G8B8A8_UINT;
     vert_attrs[1].offset = offsetof(Rvk_Line_Vertex, color);
 
-    VkPipelineVertexInputStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineVertexInputStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineVertexInputStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
@@ -1217,13 +1218,13 @@ VkPipelineVertexInputStateCreateInfo *r_temp_default_primitive_line_input_state_
 
 VkPipelineColorBlendStateCreateInfo *r_temp_default_color_blend_state_ci(void)
 {
-    VkPipelineColorBlendAttachmentState *attachment = r_temp_alloc(sizeof(*attachment));
+    VkPipelineColorBlendAttachmentState *attachment = r_temp_calloc(sizeof(*attachment));
     *attachment = (VkPipelineColorBlendAttachmentState) {
         .colorWriteMask = 0xf, // rgba
         .blendEnable = VK_FALSE,
     };
 
-    VkPipelineColorBlendStateCreateInfo *color_blend = r_temp_alloc(sizeof(*color_blend));
+    VkPipelineColorBlendStateCreateInfo *color_blend = r_temp_calloc(sizeof(*color_blend));
     *color_blend = (VkPipelineColorBlendStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
         .attachmentCount = 1,
@@ -1235,10 +1236,10 @@ VkPipelineColorBlendStateCreateInfo *r_temp_default_color_blend_state_ci(void)
 
 VkPipelineDynamicStateCreateInfo *r_temp_default_dynamic_state_ci(void)
 {
-    VkDynamicState *dynamic_states = r_temp_alloc(2*sizeof(*dynamic_states));
+    VkDynamicState *dynamic_states = r_temp_calloc(2*sizeof(*dynamic_states));
     dynamic_states[0] = VK_DYNAMIC_STATE_VIEWPORT;
     dynamic_states[1] = VK_DYNAMIC_STATE_SCISSOR;
-    VkPipelineDynamicStateCreateInfo *ci = r_temp_alloc(sizeof(*ci));
+    VkPipelineDynamicStateCreateInfo *ci = r_temp_calloc(sizeof(*ci));
     *ci = (VkPipelineDynamicStateCreateInfo) {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
         .dynamicStateCount = 2,
@@ -1496,6 +1497,17 @@ void *r_temp_alloc(size_t requested_size)
     void *result = &r_temp[r_temp_size];
     r_temp_size += size;
     return result;
+}
+
+void *r_temp_calloc(size_t requested_size)
+{
+    void *result = r_temp_alloc(requested_size);
+    if (result) {
+        memset(result, 0, requested_size);
+        return result;
+    }
+
+    return NULL;
 }
 
 char *r_temp_sprintf(const char *format, ...)

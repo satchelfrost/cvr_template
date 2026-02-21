@@ -64,6 +64,7 @@ bool build_cvr_linux(Cmd *cmd, bool force_rebuild)
     cmd_append(cmd, "gcc", "-Wall", "-Wextra", "-g");
     cmd_append(cmd, "-DVULKAN_VALIDATION_ON");
     cmd_append(cmd, "-I./"EXTERNAL);
+    cmd_append(cmd, "-I./"EXTERNAL"glfw/include");
     cmd_append(cmd, "-c", SRC"core.c");
     cmd_append(cmd, "-o", LINUX"core.o");
     cmd_append(cmd, "-lm");
@@ -80,6 +81,7 @@ bool build_example_linux(Cmd *cmd, bool force_rebuild, const char *example_name)
 
     cmd_append(cmd, "gcc", "-Wall", "-Wextra", "-g");
     cmd_append(cmd, "-I./"EXTERNAL);
+    cmd_append(cmd, "-I./"EXTERNAL"glfw/include");
     cmd_append(cmd, "-I./"SRC);
     cmd_append(cmd, "-o", exec);
     cmd_append(cmd, src, LINUX"rglfw.o", LINUX"core.o");
