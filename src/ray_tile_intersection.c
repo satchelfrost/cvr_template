@@ -206,7 +206,7 @@ int main()
 
             Vector3 point = {0.0f, 0.0f, 0.0f};
             float tile_fudge_factor = 0.98;
-            Surface surface = intersected_surface(head_dir, &point);
+            int surface = intersected_surface(head_dir, &point);
 
             /* draw the point of intersection */
             if (surface != SURFACE_NONE) {
@@ -246,7 +246,6 @@ int main()
                             }
                         }
                         draw_wireframe_box_from_mat_stack(color);
-                        // draw_wireframe_box_from_mat_stack((j == intersected_idx && surface == i) ? GREEN : RED);
                     pop_matrix();
                 }
             }
