@@ -1,4 +1,5 @@
 #include "cvr.h"
+#include "../nob.h"
 
 typedef struct {
     Vector3 normal;
@@ -28,7 +29,8 @@ bool in_2D_bounds(Vector2 point, AABB_2D aabb)
            point.y > aabb.min.x && point.y < aabb.max.y;
 }
 
-#define TILES_PER_SIDE 3
+#define MAX_TILES_PER_SIDE 11
+#define MIN_TILES_PER_SIDE 1
 #define DIST_THRESH_1 0.6
 #define DIST_THRESH_2 0.9
 
@@ -94,7 +96,7 @@ Surface intersected_surface(Ray ray, Vector3 *point)
 }
 
 /* value of negative 1 indicates out of bounds */
-int tile_index(Surface surface, Vector3 point)
+int tile_index(Surface surface, Vector3 point, int tiles_per_side)
 {
     int index = -1;
     Vector2 point_2D = {0.0f, 0.0f};
@@ -110,12 +112,66 @@ int tile_index(Surface surface, Vector3 point)
 
     float norm_x = point_2D.x - aabb.min.x;
     float norm_y = point_2D.y - aabb.min.y;
-    int tile_x_idx = norm_x*TILES_PER_SIDE;
-    int tile_y_idx = norm_y*TILES_PER_SIDE;
-    index = tile_x_idx + tile_y_idx*TILES_PER_SIDE;
-    if (index >= TILES_PER_SIDE*TILES_PER_SIDE) index = -1;
+    int tile_x_idx = norm_x*tiles_per_side;
+    int tile_y_idx = norm_y*tiles_per_side;
+    index = tile_x_idx + tile_y_idx*tiles_per_side;
+    if (index >= tiles_per_side*tiles_per_side) index = -1;
 
     return index;
+}
+
+typedef struct {
+    Tile *items;
+    size_t count;
+    size_t capacity;
+} Tiles;
+
+Tiles init_tiles(int tiles_per_side, AABB_2D aabb)
+{
+    Tiles tiles = {0};
+    da_resize(&tiles, SURFACE_COUNT*tiles_per_side*tiles_per_side);
+    float tile_length = 1.0f/tiles_per_side;
+    float start_x = aabb.min.x + tile_length*0.5;
+    float start_y = aabb.min.y + tile_length*0.5;
+
+    for (int y = 0; y < tiles_per_side; y++) {
+        for (int x = 0; x < tiles_per_side; x++) {
+            tiles.items[x + y*tiles_per_side + SURFACE_FRONT*tiles_per_side*tiles_per_side] = (Tile){
+                .center = {
+                    .x = start_x + tile_length*x,
+                    .y = start_y + tile_length*y,
+                    .z = -0.5f,
+                },
+                .length = tile_length
+            };
+            tiles.items[x + y*tiles_per_side + SURFACE_LEFT*tiles_per_side*tiles_per_side] = (Tile){
+                .center = {
+                    .x = -0.5f,
+                    .y = start_y + tile_length*y,
+                    .z = start_x + tile_length*x,
+                },
+                .length = tile_length
+            };
+            tiles.items[x + y*tiles_per_side + SURFACE_RIGHT*tiles_per_side*tiles_per_side] = (Tile){
+                .center = {
+                    .x = 0.5f,
+                    .y = start_y + tile_length*y,
+                    .z = start_x + tile_length*x,
+                },
+                .length = tile_length
+            };
+            tiles.items[x + y*tiles_per_side + SURFACE_FLOOR*tiles_per_side*tiles_per_side] = (Tile){
+                .center = {
+                    .x = start_x + tile_length*x,
+                    .y = -0.5f,
+                    .z = start_y + tile_length*y,
+                },
+                .length = tile_length
+            };
+        }
+    }
+
+    return tiles;
 }
 
 int main()
@@ -136,48 +192,12 @@ int main()
     };
     Camera *controlling_camera = &head;
 
-    Tile tiles[SURFACE_COUNT][TILES_PER_SIDE*TILES_PER_SIDE];
-    float tile_length = 1.0f/TILES_PER_SIDE;
-    float start_x = aabb.min.x + tile_length*0.5;
-    float start_y = aabb.min.y + tile_length*0.5;
-    for (int y = 0; y < TILES_PER_SIDE; y++) {
-        for (int x = 0; x < TILES_PER_SIDE; x++) {
-            tiles[SURFACE_FRONT][x + y*TILES_PER_SIDE] = (Tile){
-                .center = {
-                    .x = start_x + tile_length*x,
-                    .y = start_y + tile_length*y,
-                    .z = -0.5f,
-                },
-                .length = tile_length
-            };
-            tiles[SURFACE_LEFT][x + y*TILES_PER_SIDE] = (Tile){
-                .center = {
-                    .x = -0.5f,
-                    .y = start_y + tile_length*y,
-                    .z = start_x + tile_length*x,
-                },
-                .length = tile_length
-            };
-            tiles[SURFACE_RIGHT][x + y*TILES_PER_SIDE] = (Tile){
-                .center = {
-                    .x = 0.5f,
-                    .y = start_y + tile_length*y,
-                    .z = start_x + tile_length*x,
-                },
-                .length = tile_length
-            };
-            tiles[SURFACE_FLOOR][x + y*TILES_PER_SIDE] = (Tile){
-                .center = {
-                    .x = start_x + tile_length*x,
-                    .y = -0.5f,
-                    .z = start_y + tile_length*y,
-                },
-                .length = tile_length
-            };
-        }
-    }
+    int tiles_per_side = MIN_TILES_PER_SIDE;
+    float tile_length = 1.0f/tiles_per_side;
+    Tiles tiles = init_tiles(tiles_per_side, aabb);
 
     while (!window_should_close()) {
+        /* update */
         Ray head_dir = {
             .origin = head.position,
             .direction = Vector3Subtract(head.target, head.position),
@@ -193,8 +213,23 @@ int main()
             printf(".up = {%f, %f, %f}\n",       main_camera.up.x,       main_camera.up.y,       main_camera.up.z);
         }
 
+        if (is_key_pressed(KEY_T) && !is_key_down(KEY_LEFT_SHIFT)) {
+            tiles_per_side = (tiles_per_side + 1)%MAX_TILES_PER_SIDE;
+            if (!tiles_per_side) tiles_per_side = 1;
+            tiles = init_tiles(tiles_per_side, aabb);
+            tile_length = 1.0f/tiles_per_side;
+        }
+
+        if (is_key_pressed(KEY_T) && is_key_down(KEY_LEFT_SHIFT)) {
+            tiles_per_side = (tiles_per_side + MAX_TILES_PER_SIDE - 1)%MAX_TILES_PER_SIDE;
+            if (!tiles_per_side) tiles_per_side = 1;
+            tiles = init_tiles(tiles_per_side, aabb);
+            tile_length = 1.0f/tiles_per_side;
+        }
+
         update_camera_free(controlling_camera);
 
+        /* draw */
         begin_drawing(BLACK);
         begin_mode_3D(main_camera);
             push_matrix();
@@ -218,11 +253,14 @@ int main()
             }
 
             /* color each tile */
-            int intersected_idx = tile_index(surface, point);
+            int intersected_idx = tile_index(surface, point, tiles_per_side);
             for (int i = 0; i < SURFACE_COUNT; i++) {
-                for (int j = 0; j < TILES_PER_SIDE*TILES_PER_SIDE; j++) {
+                for (int j = 0; j < tiles_per_side*tiles_per_side; j++) {
                     push_matrix();
-                        translate(tiles[i][j].center.x, tiles[i][j].center.y, tiles[i][j].center.z);
+                        int surface_stride = tiles_per_side*tiles_per_side;
+                        Tile tile = tiles.items[i*surface_stride+j];
+
+                        translate(tile.center.x, tile.center.y, tile.center.z);
                         float scale_factor = tile_length*tile_fudge_factor;
                         switch (i) {
                         case SURFACE_FRONT: scale(scale_factor, scale_factor,         0.0f); break;
@@ -236,7 +274,7 @@ int main()
                             if (j == intersected_idx && surface == i) {
                                 color = BLUE;
                             } else {
-                                float distance = Vector3Distance(point, tiles[i][j].center);
+                                float distance = Vector3Distance(point, tile.center);
                                 if (distance < DIST_THRESH_1)
                                     color = GREEN;
                                 if (distance > DIST_THRESH_1 && distance < DIST_THRESH_2)
@@ -249,8 +287,6 @@ int main()
                     pop_matrix();
                 }
             }
-
-
         end_mode_3D();
         end_drawing();
     }
